@@ -1,11 +1,10 @@
 import sys
 
-"""Read and parse TM definition from CSV"""
 def read_tm_file(file):
     with open(file, 'r') as f:
         lines = f.readlines()
     
-    #parse file
+    # Parse file
     name_machine = lines[0].strip()
     start_state = lines[4].strip()
     accept_state = lines[5].strip()
@@ -21,39 +20,37 @@ def read_tm_file(file):
             
     return name_machine, start_state, accept_state, reject_state, transitions
 
-"Breadth first search exploration"
-def breadth_first_exp(start_state, accept_state, reject_state, transitions, input, max=1000):
-    #configuration tree
+def breadth_first_exp(start_state, accept_state, reject_state, transitions, input, max_step=1000):
     tree = [[("", start_state, input)]]
     parent = {}
     total = 0
     
-    #go through each level
-    for depth in range(max):
-        if not tree[depth]:  #end loop when no more configurations to explore
+    # Go through each level
+    for depth in range(max_step):
+        if not tree[depth]:  # End loop when no more configurations to explore
             return False, depth, total, []
             
         tree.append([]) 
         
         for config in tree[depth]:
-            left, right, state = config
+            left, state, right = config
             
-            #check if accepting
+            # Check if accepting
             if state == accept_state:
                 path = get_path(config, parent)
                 return True, depth, total, path
                 
-            #skip if rejecting
+            # Skip if rejecting
             if state == reject_state:
                 continue
                 
-            #get current character
+            # Get current character
             curr_char = right[0] if right else "_"
             
-            #get possible transitions
+            # Get possible transitions
             moves = transitions.get((state, curr_char), [])
             
-            #no more possible --> go to reject state
+            # No more possible --> go to reject state
             if not moves:
                 next = (left, reject_state, right)
                 tree[depth + 1].append(next)
@@ -61,7 +58,7 @@ def breadth_first_exp(start_state, accept_state, reject_state, transitions, inpu
                 total += 1
                 continue
                 
-            #apply possible transitions
+            # Apply possible transitions
             for next_state, write_char, direction in moves:
                 new_left, new_right = apply_move(left, right, write_char, direction)
                 next = (new_left, next_state, new_right)
@@ -69,10 +66,9 @@ def breadth_first_exp(start_state, accept_state, reject_state, transitions, inpu
                 parent[next] = config
                 total += 1
                 
-    return False, max, total, []
+    return False, max_step, total, []
 
-"""single move on tape"""
-def apply_move(left_tape, right, write_char, direction):
+def apply_move(left, right, write_char, direction):
     # Write character
     if not right:
         right = write_char
@@ -82,21 +78,23 @@ def apply_move(left_tape, right, write_char, direction):
     # Move head
     if direction == 'R':
         if len(right) > 1:
-            left_tape += right[0]
+            left += right[0]
             right = right[1:]
         else:
-            left_tape += right
+            left += right[0]
             right = "_"
     else:  # direction == 'L'
-        if left_tape:
-            right = left_tape[-1] + right
-            left_tape = left_tape[:-1]
+        if left:
+            if not right or right == "_":
+                right = "_"  
+            else:
+                right = left[-1] + right
+                left = left[:-1]
         else:
             right = "_" + right
             
-    return left_tape, right
+    return left, right
 
-"""Get path at start to current config"""
 def get_path(config, parent):
     path = [config]
     while config in parent:
@@ -112,13 +110,13 @@ def main():
     file = sys.argv[1]
     input = sys.argv[2]
     
-    #read def
+    # Read definition
     name_machine, start_state, accept_state, reject_state, transitions = read_tm_file(file)
     
-    #run breath first search 
-    check_accept, steps, total, path = breadth_first_exp(name_machine, start_state, accept_state, reject_state, transitions, input)
+    # Run breadth-first search
+    check_accept, steps, total, path = breadth_first_exp(start_state, accept_state, reject_state, transitions, input)
     
-    #results
+    # Results
     print(f"Machine: {name_machine}")
     print(f"Input: {input}")
     print(f"Depth: {steps}")
