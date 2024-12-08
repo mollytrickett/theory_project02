@@ -139,5 +139,6 @@ def main():
     else:
         print(f"\nString rejected in {steps} steps")
 
+
 if __name__ == "__main__":
     main()
