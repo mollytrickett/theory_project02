@@ -1,5 +1,6 @@
 import sys
 
+"""Reads and parses a Turing machine description from a file"""
 def read_tm_file(file):
     with open(file, 'r') as f:
         lines = f.readlines()
@@ -11,6 +12,7 @@ def read_tm_file(file):
     reject_state = lines[6].strip()
     transitions = {}
     
+    #parse transition rules 
     for line in lines[7:]:
         if line.strip():
             curr, read, next_state, write, direction = line.strip().split(',')
@@ -20,7 +22,9 @@ def read_tm_file(file):
             
     return name_machine, start_state, accept_state, reject_state, transitions
 
-def breadth_first_exp(start_state, accept_state, reject_state, transitions, input, max_step=20):
+"""Simulates a Turing machine using breadth-first search"""
+def breadth_first_exp(start_state, accept_state, reject_state, transitions, input, max_step=20):  
+    #initialize variables 
     tree = [[("", start_state, input)]]
     parent = {}
     total = 0
@@ -68,6 +72,7 @@ def breadth_first_exp(start_state, accept_state, reject_state, transitions, inpu
                 
     return False, max_step, total, [], True
 
+"""Apply a move by updating the tape and moving the head"""
 def apply_move(left, right, write_char, direction):
     #write character
     if not right:
@@ -76,6 +81,7 @@ def apply_move(left, right, write_char, direction):
         right = write_char + right[1:]
         
     #move head
+    #right 
     if direction == 'R':
         if len(right) > 1:
             left += right[0]
@@ -83,6 +89,7 @@ def apply_move(left, right, write_char, direction):
         else:
             left += right[0]
             right = "_"
+    #left 
     else: 
         if left:
             if not right or right == "_":
@@ -95,6 +102,7 @@ def apply_move(left, right, write_char, direction):
             
     return left, right
 
+"""Reconstructs the path from start to accepting configuration"""
 def get_path(config, parent):
     path = [config]
     while config in parent:
@@ -102,6 +110,7 @@ def get_path(config, parent):
         path.append(config)
     return list(reversed(path))
 
+"""Runs the Turing machine simulation on input"""
 def main():
     if len(sys.argv) != 3:
         print("Error")
